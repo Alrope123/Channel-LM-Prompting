@@ -344,10 +344,10 @@ def output_metrices(args, results, prompt, n_prefix, best_lr):
         "warmup_steps": args.warmup_steps,
         "average_accuracy_A": np.mean([result[0] for result in results]),
         "worst_accuracy_A": np.min([result[0] for result in results]),
-        "SED_accuracy_A": np.std([result[0] for result in results]) / np.sqrt(len(results)),
+        "SEM_accuracy_A": np.std([result[0] for result in results]) / np.sqrt(len(results)),
         "average_MacroF1_A": np.mean([result[1] for result in results]),
         "worst_MacroF1_A": np.min([result[1] for result in results]),
-        "SED_MacroF1_A": np.std([result[1] for result in results]) / np.sqrt(len(results))
+        "SEM_MacroF1_A": np.std([result[1] for result in results]) / np.sqrt(len(results))
     }
 
     with open(os.path.join(args.out_dir, "metrics.json"), 'w') as f:
