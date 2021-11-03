@@ -32,5 +32,5 @@ tasks:
     resources:
       gpuCount: 2
     context:
-      cluster: ai2/on-prem-aristo
+      cluster: ai2/on-prem-ai2-server
       priority: low
