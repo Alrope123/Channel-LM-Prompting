@@ -53,18 +53,6 @@ def main(logger, args):
         train_task = args.train_task
         # assert args.do_check
 
-    # datasets that also formats input sentence
-    crossfit_datasets = ['climate_fever', 'ethos-national_origin',
-                      'ethos-race', 'ethos-religion', 'financial_phrasebank',
-                      'hate_speech18', 'medical_questions_pairs', 'poem_sentiment', 
-                      'superglue-cb', 'tweet_eval-hate', 'tweet_eval-stance_atheism', 
-                      'tweet_eval-stance_feminist', 'anli', 'glue-mnli', 'glue-qnli', 
-                      'glue-rte', 'glue-wnli', 'scitail', 'sick', 
-                      'ai2_arc', 'codah', 'commonsense_qa', 'cosmos_qa', 'dream', 'hellaswag', 
-                      'openbookqa', 'qasc', 'quail', 'quarel', 'quartz-no_knowledge', 
-                      'quartz-with_knowledge', 'race-high', 'race-middle', 'sciq', 'social_i_qa', 
-                      'superglue-copa', 'swag', 'wino_grande', 'wiqa']
-
     # datasets where the average input length is long
     long_datasets = ["cr", "subj", "agnews",
                      "amazon", "yelp_full", "yelp_binary", "boolq",
@@ -109,20 +97,12 @@ def main(logger, args):
     if args.use_tau:
         assert N_LABELS_DICT[args.task] == 2
 
-    if train_task in crossfit_datasets:
-        train_datas = [load_data(args.data_dir, train_task, k, seed, "train", template_idx=template_idx)
-                       for template_idx in range(n_templates)] 
-    else:
-        train_data = load_data(args.data_dir, train_task, k, seed, "train")
+    train_data = load_data(args.data_dir, train_task, k, seed, "train")
     if args.split is None:
         assert args.do_zeroshot
         dev_data = None
     else:
-        if args.task in crossfit_datasets:
-            dev_datas = [load_data(args.data_dir, args.task, k, seed, args.split, template_idx=template_idx)
-                         for template_idx in range(n_templates)]
-        else:
-            dev_data = load_data(args.data_dir, args.task, k, seed, args.split)
+        dev_data = load_data(args.data_dir, args.task, k, seed, args.split)
 
     
     if local_rank >= 0:
@@ -132,10 +112,6 @@ def main(logger, args):
         accs, f1s = [], []
         # run over different templates
         for template_idx in range(n_templates):
-            if train_task in crossfit_datasets:
-                train_data = train_datas[template_idx]
-            if args.task in crossfit_datasets:
-                dev_data = dev_datas[template_idx] if args.split is not None else None
             acc, f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                     args.task, train_task, args.prompt_task,
                     k, seed, args.train_seed,
@@ -170,14 +146,7 @@ def main(logger, args):
 
         lrs = [0.03, 0.01, 0.003, 0.001]
         seeds = [1, 10, 100]
-        if train_task in crossfit_datasets:
-            train_data = train_datas[0]
-        if args.task in crossfit_datasets:
-            dev_data = dev_datas[0] if args.split is not None else None
-        if args.task in crossfit_datasets:
-            real_dev_datas = [load_data(args.data_dir, args.task, k, seed, "dev", template_idx=0)] 
-        else:
-            real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
+        real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
         lr_accs = []
         for lr in lrs:
             acc, f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,

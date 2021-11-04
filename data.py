@@ -8,10 +8,8 @@ import torch
 from util import prepro_sentence, prepro_sentence_pair, \
     prepro_sentence_pair_single
 
-def load_data(data_dir, task, k, seed, split, template_idx=None):
+def load_data(data_dir, task, k, seed, split):
     data_dir = os.path.join(data_dir, "k-shot", task, "{}-{}".format(k, seed))
-    if template_idx is not None:
-        data_dir = os.path.join(data_dir, str(template_idx))
     data = []
     if os.path.exists(os.path.join(data_dir, "{}.tsv".format(split))):
         with open(os.path.join(data_dir, "{}.tsv".format(split)), "r") as f:
