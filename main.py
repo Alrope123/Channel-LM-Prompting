@@ -166,14 +166,15 @@ def main(logger, args):
             if args.task in crossfit_datasets:
                 dev_data = dev_datas[template_idx] if args.split is not None else None
             acc, f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
-                    args.task, train_task, prompt_task,
+                    args.task, train_task, args.prompt_task,
                     k, seed, args.train_seed,
                     args.out_dir, args.checkpoint_dir, args.split,
                     tokenizer, model, train_data, dev_data,
                     batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
                     template_idx, args.method,
                     args.lr, args.prior_weight, args.aux_weight, args.regularization_weight,
-                    args.warmup_steps, ds_config, local_rank, prompt,
+                    args.warmup_steps, args.num_training_steps, args.eval_period,
+                    ds_config, local_rank, prompt,
                     use_demonstrations=args.use_demonstrations,
                     use_calibration=args.use_calibration,
                     ensemble=args.ensemble,
@@ -217,7 +218,8 @@ def main(logger, args):
                           batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
                           0, args.method,
                           lr, args.prior_weight, args.aux_weight, args.regularization_weight,
-                          args.warmup_steps, ds_config, local_rank, prompt,
+                          args.warmup_steps, args.num_training_steps, args.eval_period,
+                          ds_config, local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -242,7 +244,8 @@ def main(logger, args):
                           batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
                           0, args.method,
                           best_lr, args.prior_weight, args.aux_weight, args.regularization_weight,
-                          args.warmup_steps, ds_config, local_rank, prompt,
+                          args.warmup_steps, args.num_training_steps, args.eval_period,
+                          ds_config, local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -268,7 +271,8 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         batch_size, max_length, gpt2, init_method, prefix_type,
         template_idx, method_type, learning_rate, 
         prior_weight, aux_weight, regularization_weight,
-        warmup_steps, ds_config, local_rank, prompt,
+        warmup_steps, num_training_steps, eval_period,
+        ds_config, local_rank, prompt,
         use_demonstrations=False,
         use_calibration=False,
         ensemble=False,
@@ -355,13 +359,13 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
                             n_prefix=n_prefix)
 
         k = int(k)
-        eval_period = 500
-        if k == 16384:
-            num_training_steps = 1000
-        elif k == -1:
-            num_training_steps = 2000
-        else:
-            num_training_steps = 400
+        eval_period = 5
+        # if k == 16384:
+        #     num_training_steps = 1000
+        # elif k == -1:
+        #     num_training_steps = 20
+        # else:
+        #     num_training_steps = 400
 
         cache_paths = [os.path.join(out_dir, "{}cache-{}-{}-{}.pkl".format(
             task + "-" if train_task != task else "",
@@ -656,7 +660,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
             for i, input_tensor in enumerate(input_tensors):
                 losses.append(inference(model,
                                         input_tensor,
-                                        batch_size,
+                                        batch_size * 8,
                                         prior_inputs=prior_input_tensors[i] if prior_input_tensors != None else None,
                                         bad=bad))
 
@@ -761,6 +765,8 @@ if __name__ == '__main__':
     parser.add_argument("--regularization_weight", type=float, default=0)
     parser.add_argument("--warmup_steps", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--num_training_steps", type=int, default=2000)
+    parser.add_argument("--eval_period", type=int, default=500)
 
     parser.add_argument("--data_dir", type=str, default="data")
     parser.add_argument("--out_dir", type=str, default="out")
