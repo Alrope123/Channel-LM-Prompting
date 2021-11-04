@@ -2,7 +2,7 @@ version: v2-alpha
 description: continuous prompt tuning
 tasks:
   - image:
-      beaker: 01FKKN12JY6R278P2KFG02F5RA
+      beaker: 01FKKVYHE3XWS26SVCWHEBCKC0
     arguments: [python3, -m, torch.distributed.launch, --nproc_per_node=2, main.py,
                   --task, SST-2,
                   --prompt_task, subtask047_misc_answering_science_questions,
@@ -24,9 +24,9 @@ tasks:
       - name: CUDA_VISIBLE_DEVICES
         value: "0,1"
     datasets:
-      - mountPath: /inputs
+      - mountPath: /data
         source:
-          beaker: 01FKKQF1MB1SQXCZQBGXSE3R07
+          beaker: 01FKKSWFTK1JWSYCCMC2YDCBQS
     result:
       path: /outputs
     resources:
