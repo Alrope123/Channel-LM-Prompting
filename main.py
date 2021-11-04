@@ -11,7 +11,6 @@ from tqdm import tqdm
 from collections import Counter, defaultdict
 
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
-from transformers.deepspeed import HfDeepSpeedConfig
 
 from data import load_data, prepare_data, load_prompt, output_metrices
 from run import train, inference
@@ -125,36 +124,8 @@ def main(logger, args):
         else:
             dev_data = load_data(args.data_dir, args.task, k, seed, args.split)
 
-    if args.deep_speed:
-        ds_config = {
-            "train_batch_size": batch_size,
-            "train_micro_batch_size_per_gpu": int(batch_size / torch.cuda.device_count()),
-            "fp16": {
-                "enabled": False,
-                "loss_scale": 0,
-                "initial_scale_power": 32,
-                "loss_scale_window": 1000,
-                "hysteresis": 2,
-                "min_loss_scale": 1
-            },
-            "gradient_clipping": 1.0,
-            "zero_optimization": {
-                "stage": 3,
-                "offload_optimizer": {
-                    "device": "cpu",
-                    "pin_memory": True
-                },
-                "offload_param": {
-                    "device": "cpu",
-                    "pin_memory": True
-                }
-            },
-            "zero_allow_untested_optimizer": True
-        }
-    else:
-        ds_config = None
-
-    if local_rank >= 0 and not args.deep_speed:
+    
+    if local_rank >= 0:
         torch.distributed.init_process_group("nccl", init_method='env://')
     
     if not args.robust_eval:
@@ -174,7 +145,7 @@ def main(logger, args):
                     template_idx, args.method,
                     args.lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                     args.warmup_steps, args.num_training_steps, args.eval_period,
-                    ds_config, local_rank, prompt,
+                    local_rank, prompt,
                     use_demonstrations=args.use_demonstrations,
                     use_calibration=args.use_calibration,
                     ensemble=args.ensemble,
@@ -185,8 +156,7 @@ def main(logger, args):
                     prior_tune=args.prior_tune,
                     bad=args.bad,
                     do_check=args.do_check,
-                    n_prefix=args.n_prefix,
-                    deep_speed=args.deep_speed)
+                    n_prefix=args.n_prefix)
 
             accs.append(acc)
             f1s.append(f1)
@@ -198,8 +168,8 @@ def main(logger, args):
     else:
         assert args.prompt_tune and args.prompt_task != None and train_task == args.task
 
-        lrs = [0.1, 0.01, 0.001, 0.0001]
-        seeds = [100, 13, 21]
+        lrs = [0.03, 0.01, 0.003, 0.001]
+        seeds = [1, 10, 100]
         if train_task in crossfit_datasets:
             train_data = train_datas[0]
         if args.task in crossfit_datasets:
@@ -219,7 +189,7 @@ def main(logger, args):
                           0, args.method,
                           lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                           args.warmup_steps, args.num_training_steps, args.eval_period,
-                          ds_config, local_rank, prompt,
+                          local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -230,8 +200,7 @@ def main(logger, args):
                           prior_tune=args.prior_tune,
                           bad=args.bad,
                           do_check=args.do_check,
-                          n_prefix=args.n_prefix,
-                          deep_speed=args.deep_speed)
+                          n_prefix=args.n_prefix)
             lr_accs.append((lr, acc))
         best_lr = sorted(lr_accs, key=lambda x:x[1], reverse=True)[0][0]
         seed_accs = []
@@ -245,7 +214,7 @@ def main(logger, args):
                           0, args.method,
                           best_lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                           args.warmup_steps, args.num_training_steps, args.eval_period,
-                          ds_config, local_rank, prompt,
+                          local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -256,8 +225,7 @@ def main(logger, args):
                           prior_tune=args.prior_tune,
                           bad=args.bad,
                           do_check=args.do_check,
-                          n_prefix=args.n_prefix,
-                          deep_speed=args.deep_speed)
+                          n_prefix=args.n_prefix)
             seed_accs.append((acc, f1))
         logger.info("Results for robust evalution on {} with prompt of {} with lr={}".format(args.task, args.prompt_task, best_lr))
         logger.info("Accuracy = %.1f (Avg) / %.1f (Worst)" % (100*np.mean([seed_acc[0] for seed_acc in seed_accs]), 100*np.min([seed_acc[0] for seed_acc in seed_accs])))
@@ -272,7 +240,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         template_idx, method_type, learning_rate, 
         prior_weight, aux_weight, regularization_weight,
         warmup_steps, num_training_steps, eval_period,
-        ds_config, local_rank, prompt,
+        local_rank, prompt,
         use_demonstrations=False,
         use_calibration=False,
         ensemble=False,
@@ -282,8 +250,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         transform_tune=False,
         prior_tune=False,
         bad=False,
-        do_check=False, n_prefix=-1,
-        deep_speed=False):
+        do_check=False, n_prefix=-1):
 
     if local_rank >= 0:
         torch.cuda.set_device(local_rank)
@@ -418,9 +385,6 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
 
         if not do_check:
 
-            if deep_speed:
-                dschf = HfDeepSpeedConfig(ds_config)
-
             if checkpoint_dir is not None:
                 if not os.path.exists(checkpoint_dir):
                     logger.info("checkpoint %s not found..." % checkpoint_dir)
@@ -509,17 +473,17 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
 
                 model = model.cuda()
 
-            # if torch.cuda.device_count() > 1 and not deep_speed:
+            # if torch.cuda.device_count() > 1:
             #     model = torch.nn.DataParallel(model) 
             
             # distributed
-            if local_rank >= 0 and not deep_speed:
+            if local_rank >= 0:
             #     torch.distributed.init_process_group("nccl", init_method='env://')
                 model = torch.nn.parallel.DistributedDataParallel(model,
                                                 device_ids=[local_rank],
                                                 output_device=local_rank)
 
-            train(logger, model, inputs, batch_size, out_dir, ds_config, local_rank,
+            train(logger, model, inputs, batch_size, out_dir, local_rank,
                   prior_inputs=prior_input_tensors,
                   learning_rate=learning_rate,
                   regularization_weight=regularization_weight,
@@ -532,8 +496,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
                   head_tune=head_tune,
                   transform_tune=transform_tune,
                   prior_tune=prior_tune,
-                  bad=bad,
-                  deep_speed=deep_speed)
+                  bad=bad)
 
     # if local_rank > 0:
     #     logger.info("rank {} exited!".format(local_rank))
@@ -780,7 +743,6 @@ if __name__ == '__main__':
     parser.add_argument("--init_method", type=str, default="vocab")
     parser.add_argument("--prefix_type", type=str, default="soft")
 
-    parser.add_argument("--deep_speed", default=False, action="store_true")
     parser.add_argument("--local_rank", type=str, default=None)
 
     args = parser.parse_args()
