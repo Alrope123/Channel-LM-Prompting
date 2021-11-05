@@ -21,6 +21,7 @@ ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
 RUN pip3 install wheel
+RUN python3 -m pip install -U --force-reinstall pip
 RUN pip3 install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 
 RUN pip3 install --upgrade pip
