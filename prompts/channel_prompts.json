@@ -1,13 +1,13 @@
 {
-    "SST-2": "Determine if the sentiment of the following sentence is positive or negative.",
-    "sst-5": "",
-    "mr": "",
-    "cr": "",
-    "amazon": "",
-    "yelp": "",
-    "agnews": "",
-    "trec": "",
-    "yahoo": "",
-    "dbpedia": "",
-    "subj": ""
+    "SST-2": "Please determine if the sentiment of the following sentence is positive or negative.",
+    "sst-5": "Use your knowledge to determine the type of sentiment that the following sentence contains.",
+    "mr": "Please determine if the sentiment of the following sentence is positive or negative.",
+    "cr": "Please determine if the sentiment of the following sentence is positive or negative.",
+    "amazon": "Use your knowledge to determine the type of sentiment that the following review contains.",
+    "yelp_full": "Use your knowledge to determine the type of sentiment that the following review contains.",
+    "agnews": "Please determine the topic that the following piece of news is related to the most.",
+    "trec": "Please determine the type of the answer that the following question is asking for.",
+    "yahoo": "Please determine the topic that the following paragraph is related to the most.",
+    "dbpedia": "Please determine the topic that the following paragraph is related to the most.",
+    "subj": "Please use your knowledge to determine if the following sentence is subjective or objective."
 }
