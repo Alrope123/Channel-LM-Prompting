@@ -148,7 +148,7 @@ def main(logger, args):
         real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
         lr_accs = []
         for lr in lrs:
-            acc, f1, mapped_prompt, norm_distance = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+            acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                           args.task, train_task, args.prompt_task,
                           k, seed, args.train_seed,
                           args.out_dir, args.checkpoint_dir, args.split,
@@ -171,15 +171,17 @@ def main(logger, args):
                           n_prefix=args.n_prefix)
             lr_accs.append({
                 "learning_rate": lr,
-                "accuracy": acc,
-                "Macro-F1": f1,
+                "soft_accuracy": acc,
+                "soft_macro-f1": f1,
                 "mapped_prompt": mapped_prompt,
-                "norm_distance": norm_distance
+                "norm_distance": norm_distance,
+                "mapped_accuracy": mapped_acc,
+                "mapped_macro-f1": mapped_f1 
             })
-        best_lr = sorted(lr_accs, key=lambda x:x["accuracy"], reverse=True)[0]["learning_rate"]
+        best_lr = sorted(lr_accs, key=lambda x:x["soft_accuracy"], reverse=True)[0]["learning_rate"]
         seed_accs = []
         for tseed in seeds:
-            acc, f1, mapped_prompt, norm_distance = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+            acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                           args.task, train_task, args.prompt_task,
                           k, seed, tseed,
                           args.out_dir, args.checkpoint_dir, args.split,
@@ -202,13 +204,15 @@ def main(logger, args):
                           n_prefix=args.n_prefix)
             seed_accs.append({
                 "learning_rate": best_lr,
-                "accuracy": acc,
-                "Macro-F1": f1,
+                "soft_accuracy": acc,
+                "soft_macro-f1": f1,
                 "mapped_prompt": mapped_prompt,
-                "norm_distance": norm_distance
+                "norm_distance": norm_distance,
+                "mapped_accuracy": mapped_acc,
+                "mapped_macro-f1": mapped_f1 
             })
         logger.info("Results for robust evalution on {} with prompt of {} with lr={}".format(args.task, args.prompt_task, best_lr))
-        logger.info("Accuracy = %.1f (Avg) / %.1f (Worst)" % (100*np.mean([seed_acc["accuracy"] for seed_acc in seed_accs]), 100*np.min([seed_acc["accuracy"] for seed_acc in seed_accs])))
+        logger.info("Accuracy = %.1f (Avg) / %.1f (Worst)" % (100*np.mean([seed_acc["soft_accuracy"] for seed_acc in seed_accs]), 100*np.min([seed_acc["soft_accuracy"] for seed_acc in seed_accs])))
         output_metrices(args, lr_accs, seed_accs, prompt, len(tokenizer(prompt)["input_ids"]), best_lr)
         
 
@@ -588,7 +592,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
                 if prefix_type == "discrete":
                     prefix_ids, aux_loss = model.transformer.wte.map_to_discrete()
                     logger.info("The mapped discrete prefix is: {}".format(tokenizer.decode(prefix_ids)))
-                    logger.info("The auxiliary loss is: {}".format(aux_loss))
+                    logger.info("The norm distance is: {}".format(aux_loss))
 
                 # For debugging
                 if prior_tune and task not in mc_datasets:
@@ -646,8 +650,21 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         if robust_eval:
             prefix_ids, aux_loss = model.transformer.wte.map_to_discrete()
             logger.info("The mapped discrete prefix is: {}".format(tokenizer.decode(prefix_ids)))
-            logger.info("The auxiliary loss is: {}".format(aux_loss))
-            return acc, f1, tokenizer.decode(prefix_ids), aux_loss.item()
+            logger.info("The norm distance is: {}".format(aux_loss))
+
+            logger.info("Evaluating mapped discrete prompt")
+            mapped_losses = []
+            for i, input_tensor in enumerate(input_tensors):
+                mapped_losses.append(inference(model,
+                                        input_tensor,
+                                        batch_size * 8,
+                                        prior_inputs=prior_input_tensors[i] if prior_input_tensors != None else None,
+                                        bad=bad))
+            mapped_acc, mapped_f1 = evaluate(dev_data, {str(i): loss for i, loss in enumerate(mapped_losses)})
+            logger.info(mapped_acc)
+            logger.info(mapped_f1)
+
+            return acc, f1, tokenizer.decode(prefix_ids), aux_loss.item(), mapped_acc, mapped_f1
         else:
             return acc, f1
     return None, None

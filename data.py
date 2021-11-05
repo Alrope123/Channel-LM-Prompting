@@ -344,12 +344,18 @@ def output_metrices(args, lr_accs, seed_accs, prompt, n_prefix, best_lr):
         "lr_tuning_results": lr_accs,
         "best_learning_rate": best_lr,
         "seed_results": seed_accs,
-        "average_accuracy_A": np.mean([result["accuracy"] for result in seed_accs]),
-        "worst_accuracy_A": np.min([result["accuracy"] for result in seed_accs]),
-        "SEM_accuracy_A": np.std([result["accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
-        "average_MacroF1_A": np.mean([result["Macro-F1"] for result in seed_accs]),
-        "worst_MacroF1_A": np.min([result["Macro-F1"] for result in seed_accs]),
-        "SEM_MacroF1_A": np.std([result["Macro-F1"] for result in seed_accs]) / np.sqrt(len(seed_accs))
+        "average_soft_accuracy_A": np.mean([result["soft_accuracy"] for result in seed_accs]),
+        "worst_soft_accuracy_A": np.min([result["soft_accuracy"] for result in seed_accs]),
+        "SEM_soft_accuracy_A": np.std([result["soft_accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
+        "average_soft_macroF1_A": np.mean([result["soft_macro-f1"] for result in seed_accs]),
+        "worst_soft_macroF1_A": np.min([result["soft_macro-f1"] for result in seed_accs]),
+        "SEM_soft_macroF1_A": np.std([result["soft_macro-f1"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
+        "average_mapped_accuracy_A": np.mean([result["mapped_accuracy"] for result in seed_accs]),
+        "worst_mapped_accuracy_A": np.min([result["mapped_accuracy"] for result in seed_accs]),
+        "SEM_mapped_accuracy_A": np.std([result["mapped_accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
+        "average_mapped_macroF1_A": np.mean([result["mapped_macro-f1"] for result in seed_accs]),
+        "worst_mapped_macroF1_A": np.min([result["mapped_macro-f1"] for result in seed_accs]),
+        "SEM_mapped_macroF1_A": np.std([result["mapped_macro-f1"] for result in seed_accs]) / np.sqrt(len(seed_accs))
     }
 
     with open(os.path.join(args.out_dir, "metrics.json"), 'w') as f:
