@@ -2,7 +2,6 @@ import os
 import torch
 import numpy as np
 
-from tqdm import tqdm
 
 from model_util import get_optimizer_and_scheduler, get_dataloader
 
@@ -125,7 +124,7 @@ def inference(model, inputs, batch_size, prior_inputs=None, return_logits=False,
     dataloader = get_dataloader(inputs, batch_size, is_training=False, prior_inputs=prior_inputs)
 
     all_losses = []
-    for batch in tqdm(dataloader):
+    for batch in dataloader:
         input_ids=batch[0].cuda()
         attention_mask=batch[1].cuda()
         token_type_ids=batch[2].cuda()

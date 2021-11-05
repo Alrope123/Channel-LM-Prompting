@@ -1,0 +1,35 @@
+version: v2-alpha
+description: testing
+tasks:
+  - image:
+      beaker: alrope/prompting_project
+    arguments: [python3, main.py,
+                  --task, SST-2,
+                  --prompt_task, subtask047_misc_answering_science_questions,
+                  --split, test,
+                  --data_dir, data,
+                  --out_dir, /outputs,
+                  --gpt2, gpt2-large,
+                  --method, direct,
+                  --do_train,
+                  --prompt_tune,
+                  --batch_size, 4,
+                  --init_method, manual,
+                  --k, -1,
+                  --aux_weight, 0.01,
+                  --robust_eval,
+                  --num_training_steps, 20,
+                  ----eval_period, 5,
+                  --bad
+    ]
+    datasets:
+      - mountPath: /data
+        source:
+          beaker: 01FKQ0PNF5232VV85ZNYNTGPAD
+    result:
+      path: /outputs
+    resources:
+      gpuCount: 1
+    context:
+      cluster: ai2/on-prem-ai2-server
+      priority: low
