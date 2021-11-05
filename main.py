@@ -306,7 +306,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
                             n_prefix=n_prefix)
 
         k = int(k)
-        eval_period = 5
+        # eval_period = 5
         # if k == 16384:
         #     num_training_steps = 1000
         # elif k == -1:

@@ -1,5 +1,5 @@
 version: v2-alpha
-description: testing
+description: testing for max batch size
 tasks:
   - image:
       beaker: alrope/prompting_project
@@ -13,14 +13,13 @@ tasks:
                   --method, direct,
                   --do_train,
                   --prompt_tune,
-                  --batch_size, 4,
+                  --batch_size, 16,
                   --init_method, manual,
                   --k, -1,
                   --aux_weight, 0.01,
                   --robust_eval,
-                  --num_training_steps, 20,
-                  --eval_period, 5,
-                  --bad
+                  --num_training_steps, 2000,
+                  --eval_period, 500,
     ]
     datasets:
       - mountPath: /data
