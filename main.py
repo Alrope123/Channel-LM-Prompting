@@ -120,7 +120,7 @@ def main(logger, args):
                     template_idx, args.method,
                     args.lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                     args.warmup_steps, args.num_training_steps, args.eval_period,
-                    local_rank, prompt,
+                    args.robust_eval, local_rank, prompt,
                     use_demonstrations=args.use_demonstrations,
                     use_calibration=args.use_calibration,
                     ensemble=args.ensemble,
@@ -148,7 +148,7 @@ def main(logger, args):
         real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
         lr_accs = []
         for lr in lrs:
-            acc, f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+            acc, f1, mapped_prompt, norm_distance = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                           args.task, train_task, args.prompt_task,
                           k, seed, args.train_seed,
                           args.out_dir, args.checkpoint_dir, args.split,
@@ -157,7 +157,7 @@ def main(logger, args):
                           0, args.method,
                           lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                           args.warmup_steps, args.num_training_steps, args.eval_period,
-                          local_rank, prompt,
+                          args.robust_eval, local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -169,11 +169,17 @@ def main(logger, args):
                           bad=args.bad,
                           do_check=args.do_check,
                           n_prefix=args.n_prefix)
-            lr_accs.append((lr, acc))
-        best_lr = sorted(lr_accs, key=lambda x:x[1], reverse=True)[0][0]
+            lr_accs.append({
+                "learning_rate": lr,
+                "accuracy": acc,
+                "Macro-F1": f1,
+                "mapped_prompt": mapped_prompt,
+                "norm_distance": norm_distance
+            })
+        best_lr = sorted(lr_accs, key=lambda x:x["learning_rate"], reverse=True)[0]["learning_rate"]
         seed_accs = []
         for tseed in seeds:
-            acc, f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+            acc, f1, mapped_prompt, norm_distance = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                           args.task, train_task, args.prompt_task,
                           k, seed, tseed,
                           args.out_dir, args.checkpoint_dir, args.split,
@@ -182,7 +188,7 @@ def main(logger, args):
                           0, args.method,
                           best_lr, args.prior_weight, args.aux_weight, args.regularization_weight,
                           args.warmup_steps, args.num_training_steps, args.eval_period,
-                          local_rank, prompt,
+                          args.robust_eval, local_rank, prompt,
                           use_demonstrations=args.use_demonstrations,
                           use_calibration=args.use_calibration,
                           ensemble=args.ensemble,
@@ -194,10 +200,16 @@ def main(logger, args):
                           bad=args.bad,
                           do_check=args.do_check,
                           n_prefix=args.n_prefix)
-            seed_accs.append((acc, f1))
+            seed_accs.append({
+                "learning_rate": lr,
+                "accuracy": acc,
+                "Macro-F1": f1,
+                "mapped_prompt": mapped_prompt,
+                "norm_distance": norm_distance
+            })
         logger.info("Results for robust evalution on {} with prompt of {} with lr={}".format(args.task, args.prompt_task, best_lr))
-        logger.info("Accuracy = %.1f (Avg) / %.1f (Worst)" % (100*np.mean([seed_acc[0] for seed_acc in seed_accs]), 100*np.min([seed_acc[0] for seed_acc in seed_accs])))
-        output_metrices(args, seed_accs, prompt, len(tokenizer(prompt)["input_ids"]), best_lr)
+        logger.info("Accuracy = %.1f (Avg) / %.1f (Worst)" % (100*np.mean([seed_acc["accuracy"] for seed_acc in seed_accs]), 100*np.min([seed_acc["accuracy"] for seed_acc in seed_accs])))
+        output_metrices(args, lr_accs, seed_accs, prompt, len(tokenizer(prompt)["input_ids"]), best_lr)
         
 
 def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
@@ -208,7 +220,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         template_idx, method_type, learning_rate, 
         prior_weight, aux_weight, regularization_weight,
         warmup_steps, num_training_steps, eval_period,
-        local_rank, prompt,
+        robust_eval, local_rank, prompt,
         use_demonstrations=False,
         use_calibration=False,
         ensemble=False,
@@ -351,7 +363,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
             except:
                 pass
 
-        if not do_check:
+        if not do_check and not np.all([os.path.exists(checkpoint) for checkpoint in checkpoints]):
 
             if checkpoint_dir is not None:
                 if not os.path.exists(checkpoint_dir):
@@ -549,7 +561,7 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         logger.info(cache_path)
 
         # if there is a cache, load it
-        if os.path.exists(cache_path):
+        if False: # os.path.exists(cache_path):
             with open(cache_path, "rb") as f:
                 losses = pkl.load(f)
         else:
@@ -630,7 +642,14 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
             logger.info("tau = {}".format(tau))
         logger.info(acc)
         logger.info(f1)
-        return acc, f1
+
+        if robust_eval:
+            prefix_ids, aux_loss = model.transformer.wte.map_to_discrete()
+            logger.info("The mapped discrete prefix is: {}".format(tokenizer.decode(prefix_ids)))
+            logger.info("The auxiliary loss is: {}".format(aux_loss))
+            return acc, f1, tokenizer.decode(prefix_ids), aux_loss.item()
+        else:
+            return acc, f1
     return None, None
 
 def evaluate(dev_data, label_losses, tau=0, is_classification=True):

@@ -19,7 +19,7 @@ tasks:
                   --aux_weight, 0.01,
                   --robust_eval,
                   --num_training_steps, 20,
-                  ----eval_period, 5,
+                  --eval_period, 5,
                   --bad
     ]
     datasets:

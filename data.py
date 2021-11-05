@@ -329,23 +329,27 @@ def load_prompt(prompts_dir, prompt_task):
     return prompts[prompt_task]
 
 
-def output_metrices(args, results, prompt, n_prefix, best_lr):
+def output_metrices(args, lr_accs, seed_accs, prompt, n_prefix, best_lr):
     metrices = {
         "taskA": args.task,
         "taskB": args.prompt_task,
-        "discrete_prompt": prompt,
+        "target_prompt": prompt,
         "optimize_against_A": args.bad,
         "gamma": args.aux_weight,
-        "learning_rate": best_lr,
         "batch_size": args.batch_size,
         "--n_prefix": n_prefix, 
+        "num_training_steps": args.num_training_steps,
+        "eval_period": args.eval_period,
         "warmup_steps": args.warmup_steps,
-        "average_accuracy_A": np.mean([result[0] for result in results]),
-        "worst_accuracy_A": np.min([result[0] for result in results]),
-        "SEM_accuracy_A": np.std([result[0] for result in results]) / np.sqrt(len(results)),
-        "average_MacroF1_A": np.mean([result[1] for result in results]),
-        "worst_MacroF1_A": np.min([result[1] for result in results]),
-        "SEM_MacroF1_A": np.std([result[1] for result in results]) / np.sqrt(len(results))
+        "lr_tuning_results": lr_accs,
+        "best_learning_rate": best_lr,
+        "seed_results": seed_accs,
+        "average_accuracy_A": np.mean([result["accuracy"] for result in seed_accs]),
+        "worst_accuracy_A": np.min([result["accuracy"] for result in seed_accs]),
+        "SEM_accuracy_A": np.std([result["accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
+        "average_MacroF1_A": np.mean([result["Macro-F1"] for result in seed_accs]),
+        "worst_MacroF1_A": np.min([result["Macro-F1"] for result in seed_accs]),
+        "SEM_MacroF1_A": np.std([result["Macro-F1"] for result in seed_accs]) / np.sqrt(len(seed_accs))
     }
 
     with open(os.path.join(args.out_dir, "metrics.json"), 'w') as f:
