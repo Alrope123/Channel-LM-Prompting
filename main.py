@@ -83,7 +83,7 @@ def main(logger, args):
 
     if args.prompt_task is not None:
         assert args.prompt_tune and args.init_method == "manual"
-        prompt = load_prompt(args.prompts_dir, args.prompt_task)
+        prompt = load_prompt(args.prompts_dir, args.prompt_task, int(args.prompt_file_len))
         logger.info("Using prompt: %s" % prompt)
     else:
         prompt = None
@@ -750,6 +750,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_training_steps", type=int, default=2000)
     parser.add_argument("--eval_period", type=int, default=500)
     parser.add_argument("--f1_threshold", type=float, default=0.95)
+    parser.add_argument("--prompt_file_len", type=int, default=-1)
 
     parser.add_argument("--data_dir", type=str, default="data")
     parser.add_argument("--out_dir", type=str, default="out")

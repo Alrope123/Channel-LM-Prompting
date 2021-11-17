@@ -318,8 +318,12 @@ def prepare_data_for_parallel(tokenizer, train_data, test_data,
 
     return input_tensors
 
-def load_prompt(prompts_dir, prompt_task):
-    prompt_files = ["channel_prompts", "natural_prompts", "pile"]
+def load_prompt(prompts_dir, prompt_task, prompt_file_len):
+    prompt_files = ["channel_prompts", "natural_prompts"]
+    if prompt_file_len < 0:
+        prompt_files.append("pile")
+    else:
+        prompt_files.append("pile_n={}".format(prompt_file_len))
     prompts = {}
     for prompt_file in prompt_files:
         with open(os.path.join(prompts_dir, prompt_file+".json"), 'r') as f:
