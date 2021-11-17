@@ -338,6 +338,8 @@ def output_metrices(args, dev_results, test_result, prompt, n_prefix):
         "taskA": args.task,
         "taskB": args.prompt_task,
         "target_prompt": prompt,
+        "prompt_f1_threshold": args.f1_threshold,
+        "prompt_file_len": args.prompt_file_len,
         "optimize_against_A": args.bad,
         "batch_size": args.batch_size,
         "--n_prefix": n_prefix, 
