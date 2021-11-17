@@ -329,33 +329,19 @@ def load_prompt(prompts_dir, prompt_task):
     return prompts[prompt_task]
 
 
-def output_metrices(args, lr_accs, seed_accs, prompt, n_prefix, best_lr):
+def output_metrices(args, dev_results, test_result, prompt, n_prefix):
     metrices = {
         "taskA": args.task,
         "taskB": args.prompt_task,
         "target_prompt": prompt,
         "optimize_against_A": args.bad,
-        "gamma": args.aux_weight,
         "batch_size": args.batch_size,
         "--n_prefix": n_prefix, 
         "num_training_steps": args.num_training_steps,
         "eval_period": args.eval_period,
         "warmup_steps": args.warmup_steps,
-        "lr_tuning_results": lr_accs,
-        "best_learning_rate": best_lr,
-        "seed_results": seed_accs,
-        "average_soft_accuracy_A": np.mean([result["soft_accuracy"] for result in seed_accs]),
-        "worst_soft_accuracy_A": np.min([result["soft_accuracy"] for result in seed_accs]),
-        "SEM_soft_accuracy_A": np.std([result["soft_accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
-        "average_soft_macroF1_A": np.mean([result["soft_macro-f1"] for result in seed_accs]),
-        "worst_soft_macroF1_A": np.min([result["soft_macro-f1"] for result in seed_accs]),
-        "SEM_soft_macroF1_A": np.std([result["soft_macro-f1"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
-        "average_mapped_accuracy_A": np.mean([result["mapped_accuracy"] for result in seed_accs]),
-        "worst_mapped_accuracy_A": np.min([result["mapped_accuracy"] for result in seed_accs]),
-        "SEM_mapped_accuracy_A": np.std([result["mapped_accuracy"] for result in seed_accs]) / np.sqrt(len(seed_accs)),
-        "average_mapped_macroF1_A": np.mean([result["mapped_macro-f1"] for result in seed_accs]),
-        "worst_mapped_macroF1_A": np.min([result["mapped_macro-f1"] for result in seed_accs]),
-        "SEM_mapped_macroF1_A": np.std([result["mapped_macro-f1"] for result in seed_accs]) / np.sqrt(len(seed_accs))
+        "lr_tuning_results": dev_results, 
+        "test_result": test_result,
     }
 
     with open(os.path.join(args.out_dir, "metrics.json"), 'w') as f:
