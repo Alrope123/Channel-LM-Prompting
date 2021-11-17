@@ -176,7 +176,9 @@ def get_paths(out_dir, gpt2, method, task, do_zeroshot,
               transform_tune=False,
               prior_tune=False,
               bad=False,
-              n_prefix=20):
+              n_prefix=20,
+              f1_threshold=0.95,
+              prompt_file_len=-1):
 
     model_name = gpt2
 
@@ -226,10 +228,10 @@ def get_paths(out_dir, gpt2, method, task, do_zeroshot,
         return os.path.join(base_dir, cache_path+".pkl")
 
     assert batch_size is not None and lr is not None and warmup_steps is not None and regularization_weight is not None \
-           and prior_weight is not None and aux_weight is not None and bad is not None
+           and prior_weight is not None and aux_weight is not None and bad is not None and f1_threshold is not None and prompt_file_len is not None
 
-    out_dir = "BS={}-k={}-t={}-seed={}-tseed={}-lr={}-lambda={}-gamma={}-gamma2={}-against={}{}".format(
-            batch_size, k, template_idx, seed, train_seed, lr, regularization_weight, prior_weight, aux_weight, bad,
+    out_dir = "BS={}-k={}-t={}-seed={}-tseed={}-lr={}-lambda={}-gamma={}-gamma2={}-against={}-f1_threshold={}-prompt_file_len={}{}".format(
+            batch_size, k, template_idx, seed, train_seed, lr, regularization_weight, prior_weight, aux_weight, bad, f1_threshold, prompt_file_len,
             "-wamrup={}".format(warmup_steps) if warmup_steps>0 else "",
     )
 

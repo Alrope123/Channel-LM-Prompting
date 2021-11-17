@@ -143,9 +143,9 @@ def main(logger, args):
     else:
         assert args.prompt_tune and args.prompt_task != None and train_task == args.task
 
-        lrs = [0.03, 0.01]#, 0.003, 0.001, 0.0003, 0.0001]
-        seeds = [1, 10]#, 100]
-        gammas = [0.03, 0.01]#, 0.005]
+        lrs = [0.03, 0.01, 0.003, 0.001, 0.0003, 0.0001]
+        seeds = [1, 10, 100]
+        gammas = [0.03, 0.01, 0.005]
         real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
         dev_results = []
         for lr in lrs:
@@ -171,7 +171,9 @@ def main(logger, args):
                                 prior_tune=args.prior_tune,
                                 bad=args.bad,
                                 do_check=args.do_check,
-                                n_prefix=args.n_prefix)
+                                n_prefix=args.n_prefix,
+                                f1_threshold=args.f1_threshold,
+                                prompt_file_len=args.prompt_file_len)
                     dev_results.append({
                         "learning_rate": lr,
                         "training_seed": tseed,
@@ -214,7 +216,9 @@ def main(logger, args):
                         prior_tune=args.prior_tune,
                         bad=args.bad,
                         do_check=args.do_check,
-                        n_prefix=args.n_prefix)
+                        n_prefix=args.n_prefix,
+                        f1_threshold=args.f1_threshold,
+                        prompt_file_len=args.prompt_file_len)
         test_result = {
             "learning_rate": best_lr,
             "training_seed": best_tseed,
@@ -249,7 +253,8 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
         transform_tune=False,
         prior_tune=False,
         bad=False,
-        do_check=False, n_prefix=-1):
+        do_check=False, n_prefix=-1,
+        f1_threshold=0.95, prompt_file_len=-1):
 
     if local_rank >= 0:
         torch.cuda.set_device(local_rank)
@@ -322,7 +327,9 @@ def run(logger, do_train, do_zeroshot, use_tau, task, train_task, prompt_task,
                             head_tune=head_tune,
                             transform_tune=transform_tune,
                             prior_tune=prior_tune,
-                            n_prefix=n_prefix)
+                            n_prefix=n_prefix,
+                            f1_threshold=f1_threshold,
+                            prompt_file_len=prompt_file_len)
 
         k = int(k)
         # eval_period = 500
