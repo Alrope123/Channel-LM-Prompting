@@ -224,6 +224,7 @@ def main(logger, args):
             if result["prompt_f1"] > args.f1_threshold:
                 best_lr = result["learning_rate"]
                 best_gamma = result["gamma"]
+                break
                         
         acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                         args.task, train_task, args.prompt_task,
