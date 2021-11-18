@@ -342,7 +342,7 @@ def output_metrices(args, dev_results, test_result, prompt, n_prefix):
         "prompt_file_len": args.prompt_file_len,
         "optimize_against_A": args.bad,
         "batch_size": args.batch_size,
-        "--n_prefix": n_prefix, 
+        "n_prefix": n_prefix, 
         "num_training_steps": args.num_training_steps,
         "eval_period": args.eval_period,
         "warmup_steps": args.warmup_steps,

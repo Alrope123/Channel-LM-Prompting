@@ -143,62 +143,91 @@ def main(logger, args):
     else:
         assert args.prompt_tune and args.prompt_task != None and train_task == args.task
 
-        lrs = [0.03, 0.01, 0.003, 0.001, 0.0003, 0.0001]
-        seeds = [1, 10, 100]
+        lrs = [0.03, 0.003, 0.001]
         gammas = [0.03, 0.01, 0.005]
         real_dev_data = load_data(args.data_dir, args.task, k, seed, "dev")
         dev_results = []
-        for lr in lrs:
-            for tseed in seeds:
-                for gamma in gammas:
-                    acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
-                                args.task, train_task, args.prompt_task,
-                                k, seed, tseed,
-                                args.out_dir, args.checkpoint_dir, args.split,
-                                tokenizer, model, train_data, real_dev_data,
-                                batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
-                                0, args.method,
-                                lr, args.prior_weight, gamma, args.regularization_weight,
-                                args.warmup_steps, args.num_training_steps, args.eval_period,
-                                args.robust_eval, local_rank, prompt,
-                                use_demonstrations=args.use_demonstrations,
-                                use_calibration=args.use_calibration,
-                                ensemble=args.ensemble,
-                                is_null=args.split is None,
-                                prompt_tune=args.prompt_tune,
-                                head_tune=args.head_tune,
-                                transform_tune=args.transform_tune,
-                                prior_tune=args.prior_tune,
-                                bad=args.bad,
-                                do_check=args.do_check,
-                                n_prefix=args.n_prefix,
-                                f1_threshold=args.f1_threshold,
-                                prompt_file_len=args.prompt_file_len)
-                    dev_results.append({
-                        "learning_rate": lr,
-                        "training_seed": tseed,
-                        "gamma": gamma,
-                        "soft_accuracy": acc,
-                        "prompt_f1": f1_score(mapped_prompt, prompt),
-                        "soft_macro-f1": f1,
-                        "mapped_prompt": mapped_prompt,
-                        "norm_distance": norm_distance,
-                        "mapped_accuracy": mapped_acc,
-                        "mapped_macro-f1": mapped_f1 
-                    })
+        for lr in lrs:    
+            acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+                        args.task, train_task, args.prompt_task,
+                        k, seed, args.train_seed,
+                        args.out_dir, args.checkpoint_dir, args.split,
+                        tokenizer, model, train_data, real_dev_data,
+                        batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
+                        0, args.method,
+                        lr, args.prior_weight, 0.01, args.regularization_weight,
+                        args.warmup_steps, args.num_training_steps, args.eval_period,
+                        args.robust_eval, local_rank, prompt,
+                        use_demonstrations=args.use_demonstrations,
+                        use_calibration=args.use_calibration,
+                        ensemble=args.ensemble,
+                        is_null=args.split is None,
+                        prompt_tune=args.prompt_tune,
+                        head_tune=args.head_tune,
+                        transform_tune=args.transform_tune,
+                        prior_tune=args.prior_tune,
+                        bad=args.bad,
+                        do_check=args.do_check,
+                        n_prefix=args.n_prefix,
+                        f1_threshold=args.f1_threshold,
+                        prompt_file_len=args.prompt_file_len)
+            dev_results.append({
+                "learning_rate": lr,
+                "gamma": 0.01,
+                "soft_accuracy": acc,
+                "prompt_f1": f1_score(mapped_prompt, prompt),
+                "soft_macro-f1": f1,
+                "mapped_prompt": mapped_prompt,
+                "norm_distance": norm_distance,
+                "mapped_accuracy": mapped_acc,
+                "mapped_macro-f1": mapped_f1 
+            })
+        for gamma in gammas:
+            acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+                        args.task, train_task, args.prompt_task,
+                        k, seed, args.train_seed,
+                        args.out_dir, args.checkpoint_dir, args.split,
+                        tokenizer, model, train_data, real_dev_data,
+                        batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
+                        0, args.method,
+                        0.01, args.prior_weight, gamma, args.regularization_weight,
+                        args.warmup_steps, args.num_training_steps, args.eval_period,
+                        args.robust_eval, local_rank, prompt,
+                        use_demonstrations=args.use_demonstrations,
+                        use_calibration=args.use_calibration,
+                        ensemble=args.ensemble,
+                        is_null=args.split is None,
+                        prompt_tune=args.prompt_tune,
+                        head_tune=args.head_tune,
+                        transform_tune=args.transform_tune,
+                        prior_tune=args.prior_tune,
+                        bad=args.bad,
+                        do_check=args.do_check,
+                        n_prefix=args.n_prefix,
+                        f1_threshold=args.f1_threshold,
+                        prompt_file_len=args.prompt_file_len)
+            dev_results.append({
+                "learning_rate": 0.01,
+                "gamma": gamma,
+                "soft_accuracy": acc,
+                "prompt_f1": f1_score(mapped_prompt, prompt),
+                "soft_macro-f1": f1,
+                "mapped_prompt": mapped_prompt,
+                "norm_distance": norm_distance,
+                "mapped_accuracy": mapped_acc,
+                "mapped_macro-f1": mapped_f1 
+            })
         sorted_results = sorted(dev_results, key=lambda x:x["soft_accuracy"], reverse=True)
         best_lr = sorted_results[0]["learning_rate"]
-        best_tseed = sorted_results[0]["training_seed"]
         best_gamma = sorted_results[0]["gamma"]
         for result in sorted_results:
             if result["prompt_f1"] > args.f1_threshold:
                 best_lr = result["learning_rate"]
-                best_tseed = result["training_seed"]
                 best_gamma = result["gamma"]
                         
         acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                         args.task, train_task, args.prompt_task,
-                        k, seed, best_tseed,
+                        k, seed, args.train_seed,
                         args.out_dir, args.checkpoint_dir, args.split,
                         tokenizer, model, train_data, dev_data,
                         batch_size, max_length, args.gpt2, args.init_method, args.prefix_type,
@@ -221,7 +250,6 @@ def main(logger, args):
                         prompt_file_len=args.prompt_file_len)
         test_result = {
             "learning_rate": best_lr,
-            "training_seed": best_tseed,
             "gamma": best_gamma,
             "soft_accuracy": acc,
             "prompt_f1": f1_score(mapped_prompt, prompt),
@@ -231,7 +259,7 @@ def main(logger, args):
             "mapped_accuracy": mapped_acc,
             "mapped_macro-f1": mapped_f1 
         }
-        logger.info("Results for robust evalution on {} with prompt of {} with lr={}, train_seed={}, gamma={}".format(args.task, args.prompt_task, best_lr, best_tseed, best_gamma))
+        logger.info("Results for robust evalution on {} with prompt of {} with lr={}, gamma={}".format(args.task, args.prompt_task, best_lr, best_gamma))
         output_metrices(args, dev_results, test_result, prompt, len(tokenizer(prompt)["input_ids"]))
         
 
