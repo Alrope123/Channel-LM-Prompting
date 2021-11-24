@@ -146,7 +146,7 @@ def main(logger, args):
         tseeds = [1, 10, 100]
         seed_results = []
         for tseed in tseeds:
-            acc, f1, mapped_prompt, norm_distance, mappedcl_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
+            acc, f1, mapped_prompt, norm_distance, mapped_acc, mapped_f1 = run(logger, args.do_train, args.do_zeroshot, args.use_tau,
                             args.task, train_task, args.prompt_task,
                             k, seed, tseed,
                             args.out_dir, args.checkpoint_dir, args.split,
