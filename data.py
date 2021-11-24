@@ -342,12 +342,14 @@ def output_metrices(args, dev_results, test_result, prompt, n_prefix):
         "prompt_file_len": args.prompt_file_len,
         "optimize_against_A": args.bad,
         "batch_size": args.batch_size,
+        "gamma": args.aux_weight,
         "n_prefix": n_prefix, 
         "num_training_steps": args.num_training_steps,
         "eval_period": args.eval_period,
         "warmup_steps": args.warmup_steps,
-        "lr_tuning_results": dev_results, 
+        "seed_results": dev_results, 
         "test_result": test_result,
+        "model": args.gpt2
     }
 
     with open(os.path.join(args.out_dir, "metrics.json"), 'w') as f:
