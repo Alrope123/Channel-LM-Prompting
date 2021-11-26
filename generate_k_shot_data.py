@@ -272,7 +272,7 @@ def main():
     args.output_dir = os.path.join(args.output_dir, args.mode)
 
     main_for_gao(args, [task for task in args.task
-                        if task in ["SST-2", "sst-5", "mr", "cr", "trec", "subj"]])
+                        if task in ["SST-2", "sst-5", "mr", "cr", "trec", "trec-5", "trec-4", "trec-3", "subj"]])
     main_for_zhang(args, [task for task in args.task
                           if task in ["agnews", "amazon", "yelp_full", "dbpedia", "yahoo"]])
     main_for_crossfit(args, [task for task in args.task
