@@ -83,7 +83,7 @@ def get_prompts(task, idx):
     elif task in ["yelp_full", "yelp_binary", "amazon"]:
         templates = ["A %s one. ", "It was %s. ",
                      "All in all %s. ", "A %s piece. "]
-    elif task=="trec":
+    elif task in ["trec", "trec-5", "trec-4", "trec-3"]:
         templates = ["%s : ", "Q: %s : ", "Why %s ? ", "Answer: %s . "]
     elif task in ["agnews", "sogou", "dbpedia", "yahoo"]:
         templates = ["Topic: %s. ", "Subject: %s. ",
@@ -119,6 +119,14 @@ def get_prompts(task, idx):
     elif task in ["trec"]:
         label_words = ["Description", "Entity", "Expression",
                        "Human", "Location", "Number"]
+    elif task in ["trec-5"]:
+        label_words = ["Description", "Entity", "Expression",
+                       "Human", "Location"]
+    elif task in ["trec-4"]:
+        label_words = ["Description", "Entity", "Expression",
+                       "Human"]
+    elif task in ["trec-3"]:
+        label_words = ["Description", "Entity", "Expression"]                       
     elif task in ["sogou"]:
         label_words = ["Sports", "Finance", "Entertainment",
                        "Automobile", "Technology"]

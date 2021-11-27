@@ -20,7 +20,7 @@ from util import get_prompts, get_paths, flatten_label_losses, \
 from templates import TEMPLATES
 
 N_LABELS_DICT = {"SST-2": 2, "sst-5": 5, "mr": 2, "cr": 2, "mpqa": 2,
-                 "subj": 2, "trec": 6, "CoLA": 2,
+                 "subj": 2, "trec": 6, "trec-5": 5, "trec-4": 4, "trec-3": 3, "CoLA": 2,
                  "amazon": 5, "yelp_full": 5, "yelp_binary": 2,
                  "agnews": 4, "copa": 2, "boolq": 2,
                  "RTE": 2, "cb": 3,
